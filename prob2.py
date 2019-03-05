@@ -16,8 +16,8 @@ class LinearNet(nn.Module):
         return self.fc1(x)
 
 NUM_EPOCHS = 5
-linearnet = LinearNet()
-criterion = nn.CrossEntropyLoss()
+linearnet = LinearNet().cuda()
+criterion = nn.CrossEntropyLoss().cuda()
 optimizer = optim.SGD(linearnet.parameters(), lr=0.01, momentum=0.8)
 
 def vgg19_without_last_layer():
@@ -54,7 +54,7 @@ def get_pet_dataloaders():
     }
     dataloaders = {
         x: torch.utils.data.DataLoader(
-            image_datasets[x], batch_size=20, shuffle=True, num_workers=4)
+            image_datasets[x], batch_size=40, shuffle=True, num_workers=8)
         for x in ['train', 'test']
     }
     return dataloaders
@@ -62,23 +62,25 @@ def get_pet_dataloaders():
 dloader = get_pet_dataloaders()
 trainloader = dloader['train']
 testloader = dloader['test']
-vgg = vgg19_without_last_layer()
+vgg = vgg19_without_last_layer().cuda()
 
 for epoch in range(NUM_EPOCHS):
-    running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
+        #print("data loaded")
         inputs, labels = data
+        inputs = inputs.cuda()
+        labels = labels.cuda()
         inputs = vgg(inputs)
+        #print("vgg passed")
         q = torch.norm(inputs, dim=1)
         q = q.reshape((len(q), 1)).detach()
         inputs = inputs / q
         optimizer.zero_grad()
+        #print("normalized")
         outputs = linearnet(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+        #print("one mini-batch finished")
         #
-        running_loss += loss.item()
-        if i % 10 == 9:
-            print('[%5d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 10))
-            running_loss = 0.0
+        print('[%5d, %5d] loss: %.3f' % (epoch + 1, i + 1, loss.item()))
