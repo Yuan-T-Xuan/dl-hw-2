@@ -16,9 +16,9 @@ class LinearNet(nn.Module):
         return self.fc1(x)
 
 NUM_EPOCHS = 5
-linearnet = LinearNet().cuda()
-criterion = nn.CrossEntropyLoss().cuda()
-optimizer = optim.SGD(linearnet.parameters(), lr=0.01, momentum=0.8)
+linearnet = LinearNet()#.cuda()
+criterion = nn.CrossEntropyLoss()#.cuda()
+optimizer = optim.SGD(linearnet.parameters(), lr=0.05, momentum=0.8)
 
 def vgg19_without_last_layer():
     vgg19 = models.vgg19(pretrained=True)
@@ -62,14 +62,14 @@ def get_pet_dataloaders():
 dloader = get_pet_dataloaders()
 trainloader = dloader['train']
 testloader = dloader['test']
-vgg = vgg19_without_last_layer().cuda()
+vgg = vgg19_without_last_layer()#.cuda()
 
 for epoch in range(NUM_EPOCHS):
     for i, data in enumerate(trainloader, 0):
         #print("data loaded")
         inputs, labels = data
-        inputs = inputs.cuda()
-        labels = labels.cuda()
+        inputs = inputs#.cuda()
+        labels = labels#.cuda()
         inputs = vgg(inputs)
         #print("vgg passed")
         q = torch.norm(inputs, dim=1)
