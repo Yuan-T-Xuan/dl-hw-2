@@ -12,21 +12,28 @@ import pickle
 import keras
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, AveragePooling2D
+import matplotlib.pyplot as plt
 
 """
 !wget https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 !tar -xzf cifar-10-python.tar.gz
 !ls
 """
+
+l2_reg = 0.005
+
 model = Sequential()
 model.add(Conv2D(filters=64, kernel_size=(11, 11), padding="same", activation="relu",
-    data_format="channels_last", input_shape=(32, 32, 3)))
+                 data_format="channels_last", input_shape=(32, 32, 3),
+                 kernel_regularizer=keras.regularizers.l2(l2_reg)))
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), data_format="channels_last"))
 model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu",
-    data_format="channels_last"))
+                 data_format="channels_last",
+                 kernel_regularizer=keras.regularizers.l2(l2_reg)))
 model.add(Conv2D(filters=128, kernel_size=(3, 3), padding="same", activation="relu",
-    data_format="channels_last"))
-model.add(AveragePooling2D(pool_size=(16, 16), data_format="channels_last"))
+                 data_format="channels_last",
+                 kernel_regularizer=keras.regularizers.l2(l2_reg)))
+model.add(AveragePooling2D(pool_size=(2, 2), strides=(2, 2), data_format="channels_last"))
 model.add(Flatten())
 model.add(Dense(units=10, activation='softmax'))
 
@@ -41,6 +48,7 @@ def unpickle_cifar10(num):
     else:
         with open("cifar-10-batches-py/test_batch", 'rb') as fo:
             d = pickle.load(fo, encoding='bytes')
+    d[b'data'] = d[b'data'].reshape(-1, 3, 32, 32).transpose(0,2,3,1).astype("float32")
     images = d[b'data']
     labels = d[b'labels']
     images = images.astype("float32") / 255.0
@@ -53,7 +61,11 @@ for i in [2,3,4,5]:
     images = np.vstack((images, img))
     labels = labels + lbl
 
-model.fit(images, labels, epochs=100, batch_size=100)
+print(images.shape)
+plt.imshow(images[4] * 0.2525 + 0.4747)
+plt.show()
+
+model.fit(images, labels, epochs=80, batch_size=100)
 
 test_images, test_labels = unpickle_cifar10(0)
 model.evaluate(test_images, test_labels, batch_size=100)
@@ -61,7 +73,6 @@ model.evaluate(test_images, test_labels, batch_size=100)
 weights, biases = model.layers[0].get_weights()
 weights.shape
 
-import matplotlib.pyplot as plt
 fig, axes = plt.subplots(nrows=8, ncols=8, sharey=True, sharex=True)
 for i in range(8):
     for j in range(8):
