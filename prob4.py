@@ -2,6 +2,7 @@ import torch
 from torch.autograd import Variable
 import torchvision.models as models
 import numpy as np
+import scipy.misc
 import matplotlib.pyplot as plt
 from prob1 import image_loader
 
@@ -56,3 +57,12 @@ show_image(x, True)
 
 plt.imshow(np.array((x - original_image)[0].tolist()).transpose(1,2,0))
 plt.show()
+
+n = x.detach().numpy()
+print("original:")
+print(get_top_3(torch.tensor(n), model))
+print("after mirror reflection:")
+print(get_top_3(torch.tensor(np.array(np.flip(n, 3))), model))
+show_image(torch.tensor(np.array(np.flip(n, 3))))
+
+scipy.misc.imsave('outfile_812.png', n[0].transpose(1,2,0))
