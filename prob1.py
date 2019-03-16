@@ -17,11 +17,26 @@ _image_loader = transforms.Compose([
 ])
 _model = models.vgg19(pretrained=True)
 
+def image_loader2(pil_image):
+    image = pil_image
+    image = _image_loader(image).float()
+    image = image.unsqueeze(0)
+    return image
+
 def image_loader(image_name):
     image = Image.open(image_name)
     image = _image_loader(image).float()
     image = image.unsqueeze(0)
     return image
+
+def get_top_3_2(pil_image):
+    image = image_loader2(pil_image)
+    result = _model(image)
+    result = result.squeeze()
+    result = result.tolist()
+    i = list(range(len(result)))
+    result = list(zip(result, i))
+    return sorted(result, reverse=True)[:3]
 
 def get_top_3(image_name):
     image = image_loader(image_name)
